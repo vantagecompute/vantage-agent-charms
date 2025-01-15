@@ -1,0 +1,6 @@
+jobbergate-agent:
+  snap-config: |
+    base-api-url=https://apis.vantagehpc.io
+    oidc-domain=auth.vantagehpc.io/realms/vantage
+    oidc-client-id=tucker-nuc-49975d24-7d73-49a3-bfda-28ecb926aa2b
+    oidc-client-secret=4pwxBHwGrtio5F1kiWxiZw1nkBoKSlMvMTPiLrtb9P0

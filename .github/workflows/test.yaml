@@ -1,0 +1,54 @@
+name: QA Checks on push
+
+on:
+  pull_request:
+  workflow_call:
+
+jobs:
+  qa-vantage-agent-charm:
+    name: "Apply QA checks to the vantage-agent charm"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          architecture: 'x64'
+
+      - name: "Install tox, run 'make lint'"
+        run: |
+          cd vantage-agent
+          pip install tox==4.18.0
+          make qa
+
+  qa-jobbergate-agent-charm:
+    name: "Apply QA checks to the jobbergate-agent charm"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          architecture: 'x64'
+
+      - name: "Install tox, run 'make lint'"
+        run: |
+          cd jobbergate-agent
+          pip install tox==4.18.0
+          make qa
+
+  qa-license-manager-agent-charm:
+    name: "Apply QA checks to the license-manager-agent charm"
+    runs-on: "ubuntu-latest"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          architecture: 'x64'
+
+      - name: "Install tox, run 'make lint'"
+        run: |
+          cd license-manager-agent
+          pip install tox==4.18.0
+          make qa

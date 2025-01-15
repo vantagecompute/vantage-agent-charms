@@ -1,0 +1,9 @@
+lib/
+build/
+*.charm
+vantage-agent.yaml
+version
+.venv
+.tox
+.ruff_cache
+venv
