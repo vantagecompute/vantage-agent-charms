@@ -9,8 +9,12 @@ lint: ## Run linter
 format: ## Run formatter
 	tox -e format
 
+.PHONY: get-lib
+get-lib: ## Get lib dependency
+	@charmcraft fetch-libs
+
 .PHONY: static
-static: ## Run static analysis
+static: get-lib ## Run static analysis
 	tox -e static
 
 .PHONY: qa

@@ -1,7 +1,7 @@
 lib/
 build/
 *.charm
-vantage-agent.yaml
+license-manager-agent.yaml
 version
 .venv
 .tox

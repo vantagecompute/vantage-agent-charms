@@ -18,7 +18,7 @@ parts:
     charm-requirements: ["requirements.txt"]
 charm-libs:
 - lib: vantage-agent.agent_snapper
-  version: "0.2"
+  version: "0.4"
 config:
   options:
     snap-config:
@@ -29,10 +29,6 @@ config:
       type: string
       description: The snap channel to use.
       default: "stable"
-    snap-confinement:
-      type: string
-      description: The snap confinement to use.
-      default: "classic"
 requires:
   juju-info:
     interface: juju-info

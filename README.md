@@ -10,7 +10,7 @@
 # vantage-agent-charms
 
 This repo provides the charms used to integrate any Slurm cluster with Vantage. Each
-charm deploys the corresponding agent's snap package and manages it's life-cycle in the
+charm deploys the corresponding agent's snap package and manages its life cycle in the
 juju service.
 
 For information about each charm, please checkout the README in each sub-project:
