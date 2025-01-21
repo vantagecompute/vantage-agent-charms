@@ -248,7 +248,12 @@ class AgentSnapper(Object):
     def _sys_exec(*cmd: Any) -> str:
         str_cmd = [str(p) for p in cmd]
         logger.debug(f"-----> Running command in subprocess: {shlex.join(str_cmd)}")
-        result = subprocess.run(str_cmd, capture_output=True, check=False)
+        try:
+            result = subprocess.run(str_cmd, capture_output=True, check=False)
+        except Exception as exc:
+            message = f"{shlex.join(str_cmd)} - {exc}"
+            logger.error(f"Invalid system command: {message}")
+            raise SnapperSysCallError(f"System command failed: {message}")
 
         if result.returncode != 0:
             err = result.stderr.decode('utf-8')

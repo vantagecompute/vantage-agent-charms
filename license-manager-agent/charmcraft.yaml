@@ -1,10 +1,10 @@
 name: license-manager-agent
-title: The LM Agent life-cycle manager.
+title: The LM Agent life cycle manager.
 type: charm
-summary: License Manager Agent package life-cycle encapsulated in a charm
+summary: License Manager Agent package life cycle encapsulated in a charm
 description: |
   This charm provides the License Manager Agent component of Vantage installed by Snap.
-  It embeds the snap package in a charm app and wraps its life-cycle.
+  It embeds the snap package in a charm app and wraps its life cycle.
 links:
   contact: Email us at info@omnivector.solutions
   issues: ["https://github.com/omnivector-solutions/vantage-agent-charms/issues"]
