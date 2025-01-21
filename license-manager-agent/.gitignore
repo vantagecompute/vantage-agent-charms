@@ -1,0 +1,9 @@
+lib/
+build/
+*.charm
+license-manager-agent.yaml
+version
+.venv
+.tox
+.ruff_cache
+venv
