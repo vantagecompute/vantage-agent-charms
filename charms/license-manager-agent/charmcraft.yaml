@@ -1,0 +1,62 @@
+name: license-manager-agent
+title: The LM Agent life cycle manager.
+summary: License Manager Agent package life cycle encapsulated in a charm
+description: |
+  This charm provides the License Manager Agent component of Vantage installed by Snap.
+  It embeds the snap package in a charm app and wraps its life cycle.
+
+links:
+  contact: Email us at info@vantagecompute.ai
+  issues: ["https://github.com/vantagecompute/vantage-agent-charms/issues"]
+  source: ["https://github.com/vantagecompute/vantage-agent-charms"]
+
+subordinate: true
+
+type: charm
+platforms:
+  ubuntu@24.04:amd64:
+
+parts:
+  charm: {}
+
+requires:
+  juju-info:
+    interface: juju-info
+    scope: container
+
+config:
+  options:
+    snap-channel:
+      type: string
+      description: The snap channel to use.
+      default: "stable"
+
+    license-manager-agent-base-api-url:
+      type: string
+      description: Base API URL
+      default: "https://apis.vantagecompute.ai"
+
+    license-manager-agent-oidc-domain:
+      type: string
+      description: OIDC Domain
+      default: "auth.vantagecompute.ai/realms/vantage"
+
+    license-manager-agent-oidc-client-id:
+      type: string
+      description: OIDC Client ID
+      default: ""
+
+    license-manager-agent-oidc-client-secret:
+      type: string
+      description: OIDC Client Secret
+      default: ""
+
+    license-manager-agent-sentry-env:
+      type: string
+      description: Sentry Environment
+      default: ""
+
+    license-manager-agent-sentry-dsn:
+      type: string
+      description: Sentry DSN
+      default: ""

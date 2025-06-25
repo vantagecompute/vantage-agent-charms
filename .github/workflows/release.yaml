@@ -1,43 +1,57 @@
-name: Release to Charmhub
+name: Release to latest/edge
 
 on:
-  workflow_dispatch:
-    inputs:
-      channel:
-        description: 'The channel where the charm is going to be released to'
-        required: true
-        default: 'stable'
-        type: choice
-        options:
-          - stable
-          - candidate
-          - beta
-          - edge
+  push:
+    branches:
+      - main
 
 jobs:
   ci-tests:
     uses: ./.github/workflows/test.yaml
 
   release-to-charmhub:
-    name: Release to CharmHub
+    name: Release to Charmhub
     needs:
       - ci-tests
     runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: true
+      matrix:
+        charm: [jobbergate-agent, license-manager-agent, vantage-agent]
     steps:
+      - name: Remove unnecessary files
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /usr/local/share/boost
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
       - name: Checkout
         uses: actions/checkout@v3
-
+      - name: Select Charmhub channel
+        uses: canonical/charming-actions/channel@2.5.0-rc
+        id: channel
+      - name: Install Just
+        uses: extractions/setup-just@v2
+        with:
+          just-version: 1.38.0
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: 0.5.8
       - name: Install Charmcraft
-        run: |
-          sudo snap install charmcraft --channel 3.x/stable --classic
-
-      - name: Build bundle
-        run: |
-          charmcraft pack
-          mv vantage-agent_*.charm vantage-agent.charm
-
-      - name: Create bundle revision
-        run: |
-          charmcraft upload --name=vantage-agent --release=${{ github.event.inputs.channel }} vantage-agent.charm
-        env:
-          CHARMCRAFT_AUTH: ${{ secrets.CHARMCRAFT_AUTH }}
+        run: sudo snap install charmcraft --classic --channel latest/stable
+      - name: Stage charm
+        run: just repo stage ${{ matrix.charm }} --clean
+      - name: Setup LXD
+        uses: canonical/setup-lxd@v0.1.2
+        with:
+          channel: 5.21/stable
+      - name: Upload charm to Charmhub
+        uses: canonical/charming-actions/upload-charm@2.5.0-rc
+        with:
+          credentials: "${{ secrets.CHARMCRAFT_AUTH }}"
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          channel: "${{ steps.channel.outputs.name }}"
+          charm-path: "./_build/${{ matrix.charm }}"
+          tag-prefix: "${{ matrix.charm }}"
+          destructive-mode: false

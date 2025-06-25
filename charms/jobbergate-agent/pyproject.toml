@@ -1,0 +1,8 @@
+[project]
+name = "jobbergate-agent"
+version = "0.0"
+requires-python = ">=3.12"
+dependencies = [
+    "ops",
+    "agent-snapper",
+]

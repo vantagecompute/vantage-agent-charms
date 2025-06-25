@@ -1,28 +1,145 @@
-![Build Status](https://img.shields.io/github/actions/workflow/status/omnivector-solutions/vantage-agent-charms/test.yaml?branch=main&label=build&logo=github&style=plastic)
-![GitHub Issues](https://img.shields.io/github/issues/omnivector-solutions/vantage-agent-charms?label=issues&logo=github&style=plastic)
-![Pull Requests](https://img.shields.io/github/issues-pr/omnivector-solutions/vantage-agent-charms?label=pull-requests&logo=github&style=plastic)
-![GitHub Contributors](https://img.shields.io/github/contributors/omnivector-solutions/vantage-agent-charms?logo=github&style=plastic)
+<a href="https://www.vantagecompute.ai/">
+  <img src="https://vantage-compute-public-assets.s3.us-east-1.amazonaws.com/branding/vantage-logo-text-black-horz.png" alt="Vantage Compute Logo" width="100" style="margin-bottom: 0.5em;"/>
+</a>
 
-> An [Omnivector](https://www.omnivector.io/) initiative
->
-> [![omnivector-logo](https://omnivector-public-assets.s3.us-west-2.amazonaws.com/branding/omnivector-logo-text-black-horz.png)](https://www.omnivector.io/)
+<div align="center">
 
-# vantage-agent-charms
+# Vantage Agent Charms
 
-This repo provides the charms used to integrate any Slurm cluster with Vantage. Each
-charm deploys the corresponding agent's snap package and manages its life cycle in the
-juju service.
 
-For information about each charm, please checkout the README in each sub-project:
+![Build Status](https://img.shields.io/github/actions/workflow/status/vantagecompute/vantage-agent-charms/test.yaml?branch=main&label=build&logo=github&style=plastic)
+![GitHub Issues](https://img.shields.io/github/issues/vantagecompute/vantage-agent-charms?label=issues&logo=github&style=plastic)
+![Pull Requests](https://img.shields.io/github/issues-pr/vantagecompute/vantage-agent-charms?label=pull-requests&logo=github&style=plastic)
+![GitHub Contributors](https://img.shields.io/github/contributors/vantagecompute/vantage-agent-charms?logo=github&style=plastic)
 
-- [vantage-agent](vantage-agent/README.md)
-- [jobbergate-agent](jobbergatge-agent/README.md)
-- [license-manager-agent](license-manager-agent/README.md)
+</div>
 
+
+## Overview
+
+The **Vantage Agent Charms** are a collection of Juju charms that enable seamless integration of Slurm clusters with the [Vantage](https://vantagecompute.ai) platform. Each charm manages the deployment and lifecycle of its corresponding agent snap, providing automation and operational consistency for HPC environments.
+
+### Included Charms
+
+- [vantage-agent](charms/vantage-agent/README.md): Core agent for Vantage integration.
+- [jobbergate-agent](charms/jobbergate-agent/README.md): Manages job submission and orchestration.
+- [license-manager-agent](charms/license-manager-agent/README.md): Handles license management for cluster workloads.
+
+> For detailed usage and configuration, see the README in each sub-project.
+
+---
+
+## Getting Started
+
+### Build
+This project uses [`uv`](https://docs.astral.sh/uv/) in combination with [`just`](https://github.com/casey/just)
+to drive [`charmcraft`](https://canonical-charmcraft.readthedocs-hosted.com/en/stable/) to build the [charms](https://juju.is/charms-architecture) in [`lxd`](https://canonical.com/lxd) containers.
+
+Install the dependencies.
+
+```bash
+sudo snap install charmcraft --channel=latest/stable --classic
+sudo snap install juju --channel=3/stable --classic
+sudo snap install just --classic
+sudo snap install astral-uv --classic
+sudo snap install lxd --channel=latest/stable --classic
+```
+Once you have `charmcraft`, `lxd`, `just`, and `uv` installed you are ready to build.
+
+```bash
+just repo build
+```
+
+After a successful build, the compiled charms will be available in the `_build/` directory:
+
+```bash
+ls -la _build/
+```
+
+### Deploy Slurm
+[Bootstrap](https://documentation.ubuntu.com/juju/3.6/reference/juju-cli/list-of-juju-cli-commands/bootstrap/) a [juju controller](https://documentation.ubuntu.com/juju/3.6/reference/controller/) and
+[add a model](https://documentation.ubuntu.com/juju/3.6/reference/model/).
+
+> **Note:** the cluster name, "vantage-cluster". To be used in the next step.
+
+```bash
+# Bootstrap lxd/localhost
+juju bootstrap localhost
+
+# Add a model
+juju add-model slurm
+
+# Deploy MySQL
+juju deploy mysql --channel 8.0/stable
+
+# Deploy slurmdbd
+juju deploy slurmdbd --channel edge
+
+# Deploy slurmctld and configure the cluster-name
+juju deploy slurmctld --channel edge \
+    --config cluster-name=vantage-cluster
+
+# Deploy slurmd
+juju deploy slurmd --channel edge
+
+# Deploy a utility node for the agents
+juju deploy sackd slurm-util --channel edge
+
+# Integrate the applications to form the cluster
+juju integrate slurmdbd mysql
+juju integrate slurmdbd slurmctld
+juju integrate slurmd slurmctld
+juju integrate slurm-util slurmctld
+```
+> **Note:** For more information on deploying and managing Slurm with Juju, see the [Charmed HPC Documentation](https://canonical-charmed-hpc.readthedocs-hosted.com/latest/).
+
+### Deploy Vantage Agents
+Obtain your cluster oidc configuration (needed to configure the agents) in the [Vantage UI](https://vantagecompute.ai).
+Once you have your cluster oidc configuration, [deploy](https://documentation.ubuntu.com/juju/3.6/reference/juju-cli/list-of-juju-cli-commands/deploy/)
+and [integrate](https://documentation.ubuntu.com/juju/3.6/reference/juju-cli/list-of-juju-cli-commands/integrate/) the vantage-agents we just built (in the `_build/` dir).
+
+```bash
+#!/bin/bash
+
+OIDC_CLIENT_ID=<oidc_client_id>
+OIDC_CLIENT_SECRET=<oidc_client_secret>
+SLURM_CLUSTER_NAME=vantage-cluster
+
+juju deploy ./_build/license-manager-agent.charm \
+    --config license-manager-agent-oidc-client-id=$OIDC_CLIENT_ID \
+    --config license-manager-agent-oidc-client-secret=$OIDC_CLIENT_SECRET
+
+juju deploy ./_build/jobbergate-agent.charm \
+    --config jobbergate-agent-oidc-client-id=$OIDC_CLIENT_ID \
+    --config jobbergate-agent-oidc-client-secret=$OIDC_CLIENT_SECRET
+
+juju deploy ./_build/vantage-agent.charm \
+    --config vantage-agent-oidc-client-id=$OIDC_CLIENT_ID \
+    --config vantage-agent-oidc-client-secret=$OIDC_CLIENT_SECRET \
+    --config vantage-agent-cluster-name=$SLURM_CLUSTER_NAME
+
+for charm in license-manager-agent jobbergate-agent vantage-agent; do
+    juju integrate slurm-util $charm;
+done
+```
+Following these steps, your cluster will be ready for use with the Vantage platform.
+
+---
+
+## Contributing
+
+Contributions are welcome! Please open issues or pull requests for bug fixes, improvements, or new features.
+
+---
 
 ## License
-Distributed under the MIT License. See the [LICENSE][license-url] file for details.
 
+Distributed under the Apache v2 License. See the [LICENSE](./LICENSE) file for details.
 
 ## Contact
-Email us: [Omnivector Solutions](mailto:info@omnivector.solutions)
+
+For questions or support, email us at [info@vantagecompute.ai](mailto:info@vantagecompute.ai).
+
+---
+
+© 2025 Vantage Compute Corporation. All rights reserved.
