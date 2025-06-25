@@ -1,0 +1,74 @@
+name: vantage-agent
+title: The Vantage Agent life cycle manager.
+summary: Vantage Agent package life cycle encapsulated in a charm
+description: |
+  This charm provides the Vantage Agent component of Vantage installed by Snap.
+  It embeds the snap package in a charm app and wraps its life cycle.
+
+links:
+  contact: Email us at info@omnivector.solutions
+  issues: ["https://github.com/omnivector-solutions/vantage-agent-charms/issues"]
+  source: ["https://github.com/omnivector-solutions/vantage-agent-charms"]
+
+subordinate: true
+
+type: charm
+platforms:
+  ubuntu@24.04:amd64:
+
+parts:
+  charm: {}
+
+requires:
+  juju-info:
+    interface: juju-info
+    scope: container
+
+config:
+  options:
+    snap-channel:
+      type: string
+      description: The snap channel to use.
+      default: "stable"
+
+    vantage-agent-base-api-url:
+      type: string
+      description: Base API URL
+      default: "https://apis.vantagecompute.ai"
+
+    vantage-agent-oidc-domain:
+      type: string
+      description: OIDC Domain
+      default: "auth.vantagecompute.ai/realms/vantage"
+
+    vantage-agent-oidc-client-id:
+      type: string
+      description: OIDC Client ID
+      default: ""
+
+    vantage-agent-oidc-client-secret:
+      type: string
+      description: OIDC Client Secret
+      default: ""
+
+    vantage-agent-task-jobs-interval-seconds:
+      type: string
+      description: |
+        The interval in seconds at which the agent will run its internal task jobs like
+        sending data to the Vantage API server. This is optional and defaults to 10 seconds.
+      default: "10"    
+
+    vantage-agent-sentry-env:
+      type: string
+      description: Sentry Environment
+      default: ""
+
+    vantage-agent-sentry-dsn:
+      type: string
+      description: Sentry DSN
+      default: ""
+
+    vantage-agent-cluster-name:
+      type: string
+      description: Cluster Name
+      default: ""
