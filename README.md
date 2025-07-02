@@ -1,15 +1,20 @@
-
-
 <a href="https://www.vantagecompute.ai/">
   <img src="https://vantage-compute-public-assets.s3.us-east-1.amazonaws.com/branding/vantage-logo-text-black-horz.png" alt="Vantage Compute Logo" width="100" style="margin-bottom: 0.5em;"/>
 </a>
 
+<div align="center">
+
 # Vantage Agent Charms
+
 
 ![Build Status](https://img.shields.io/github/actions/workflow/status/vantagecompute/vantage-agent-charms/test.yaml?branch=main&label=build&logo=github&style=plastic)
 ![GitHub Issues](https://img.shields.io/github/issues/vantagecompute/vantage-agent-charms?label=issues&logo=github&style=plastic)
 ![Pull Requests](https://img.shields.io/github/issues-pr/vantagecompute/vantage-agent-charms?label=pull-requests&logo=github&style=plastic)
 ![GitHub Contributors](https://img.shields.io/github/contributors/vantagecompute/vantage-agent-charms?logo=github&style=plastic)
+
+
+</div>
+
 
 ## Overview
 
