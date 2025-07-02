@@ -22,9 +22,9 @@
 
 ### Supported Charms
 
-- [vantage-agent](vantage-agent/README.md): Core agent for Vantage integration.
-- [jobbergate-agent](jobbergate-agent/README.md): Manages job submission and orchestration.
-- [license-manager-agent](license-manager-agent/README.md): Handles license management for cluster workloads.
+- [vantage-agent](charms/vantage-agent/README.md): Core agent for Vantage integration.
+- [jobbergate-agent](charms/jobbergate-agent/README.md): Manages job submission and orchestration.
+- [license-manager-agent](charms/license-manager-agent/README.md): Handles license management for cluster workloads.
 
 > For detailed usage and configuration, see the README in each sub-project.
 
