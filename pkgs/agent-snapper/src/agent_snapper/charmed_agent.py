@@ -1,18 +1,16 @@
 """Agent Snapper Library.
 
-This library provides the `AgentSnapper` class that provides all the event handling
-and operations logic needed to run a Snapped Vantage Agent within a charm. This
-allows the Charm for a Snapped Vantage Agent to be very minimalist and avoid
-repeating a lot of boilerplate code.
+This library provides the `AgentSnapper` class that encapsulates all event handling and operational logic required
+to manage a Snapped Vantage Agent within a Juju charm. By using this library, charm authors can avoid boilerplate
+charm code and focus on custom logic.
 """
 
 import json
 import logging
-import re
 import shlex
 import subprocess
 from pathlib import Path
-from typing import Any, List, Union
+from typing import Any, List, Optional, Union
 
 import ops
 
@@ -41,32 +39,43 @@ class AgentSnapper(ops.Object):
         "oidc-client-secret",
     ]
 
-    def __init__(self, charm: ops.CharmBase, snap_name: str, required_snap_config: list = []):
-        super().__init__(charm, None)
+    def __init__(
+        self,
+        charm: ops.CharmBase,
+        snap_name: str,
+        required_snap_config: Optional[List[str]] = None,
+    ):
+        """Initialize the AgentSnapper.
 
+        Args:
+            charm: The parent CharmBase instance.
+            snap_name: The name of the snap to manage.
+            required_snap_config: Additional required snap config keys (optional).
+        """
+        super().__init__(charm, None)
         self._charm = charm
         self._snap_path = Path("/usr/bin/snap")
         self._snap_name = snap_name
-        self._required_snap_config = required_snap_config
+        self._required_snap_config = required_snap_config or []
 
-        event_handler_bindings = {
-            self._charm.on.install: self._on_install,
-            self._charm.on.config_changed: self._on_config_changed,
-            self._charm.on.update_status: self._on_update_status,
-            self._charm.on.stop: self._on_stop,
-            self._charm.on.remove: self._on_remove,
-        }
-        for event, handler in event_handler_bindings.items():
+        # Register event handlers
+        for event, handler in [
+            (self._charm.on.install, self._on_install),
+            (self._charm.on.config_changed, self._on_config_changed),
+            (self._charm.on.update_status, self._on_update_status),
+            (self._charm.on.stop, self._on_stop),
+            (self._charm.on.remove, self._on_remove),
+        ]:
             self._charm.framework.observe(event, handler)
 
     @property
     def _required_snap_configs(self) -> List[str]:
-        """Return the required snap configs."""
+        """Return the required snap config keys (default + user-specified)."""
         return self._SNAP_REQUIRED_CONFIGS + self._required_snap_config
 
     ## Event Handlers
     def _on_install(self, event: ops.InstallEvent) -> None:
-        """Perform install operations."""
+        """Perform install operations for the snap."""
         logger.debug(f"## Processing install event for {self._snap_name}.")
         self._charm.unit.status = ops.WaitingStatus(f"Installing snap for {self._snap_name}")
         try:
@@ -74,15 +83,14 @@ class AgentSnapper(ops.Object):
         except Exception as e:
             logger.error(f"## Error installing {self._snap_name}: {e}")
             self._charm.unit.status = ops.BlockedStatus(
-                "Error installing the snap for {self._snap_name}"
+                f"Error installing the snap for {self._snap_name}"
             )
             event.defer()
             return
-
         logger.debug(f"Snap for {self._snap_name} installed")
 
     def _on_config_changed(self, event: ops.ConfigChangedEvent) -> None:
-        """Perform config-changed operations."""
+        """Perform config-changed operations for the snap."""
         logger.debug(f"## Processing config changed event for {self._snap_name}.")
         if not self._is_snap_installed:
             logger.debug(f"## Snap for {self._snap_name} not installed, deferring event")
@@ -95,9 +103,10 @@ class AgentSnapper(ops.Object):
             for key, value in self._charm.config.items()
             if key.startswith(prefix)
         }
-        logger.info(snap_configs)
+        logger.info(f"Snap configs: {snap_configs}")
 
-        if all(snap_configs[key] for key in self._required_snap_configs):
+        missing = [k for k in self._required_snap_configs if not snap_configs.get(k)]
+        if not missing:
             self.run_snap_service("stop")
             for k, v in snap_configs.items():
                 self._sys_exec(self._snap_path, "set", self._snap_name, f"{k}={v}")
@@ -106,12 +115,11 @@ class AgentSnapper(ops.Object):
                 self.run_snap_service("start")
 
             self._on_update_status(event)
-
             return
 
-        missing_configs = [f"{prefix}{k}" for k, v in snap_configs.items() if v == ""]
+        missing_configs = [f"{prefix}{k}" for k in missing]
         self._charm.unit.status = ops.BlockedStatus(
-            f"Cannot start {self._snap_name}. Missing Config: {','.join(missing_configs)}"
+            f"Cannot start {self._snap_name}. Missing Config: {', '.join(missing_configs)}"
         )
 
     def _on_stop(self, event: ops.StopEvent):
@@ -128,11 +136,10 @@ class AgentSnapper(ops.Object):
     def _on_update_status(
         self, event: Union[ops.ConfigChangedEvent, ops.UpdateStatusEvent, ops.InstallEvent]
     ) -> None:
-        """Update the charm status."""
+        """Update the charm status based on snap state."""
         if self.model.unit.is_leader():
             if self._is_snap_active:
                 self._charm.unit.status = ops.ActiveStatus()
-                return
             else:
                 self._charm.unit.status = ops.BlockedStatus("Cannot start snap.")
         else:
@@ -141,9 +148,8 @@ class AgentSnapper(ops.Object):
     ## Operations
     @property
     def _is_snap_installed(self) -> bool:
-        """Determine if snap is installed."""
+        """Return True if the snap is installed, else False."""
         logger.debug(f"### Checking if snap {self._snap_name} is installed")
-
         try:
             self._sys_exec(
                 self._snap_path,
@@ -156,9 +162,8 @@ class AgentSnapper(ops.Object):
 
     @property
     def _is_snap_active(self) -> bool:
-        """Determine if snap is active."""
+        """Return True if the snap service is active, else False."""
         logger.debug(f"### Checking active status for {self._snap_name}.daemon")
-
         try:
             status_output = self._sys_exec(
                 self._snap_path,
@@ -168,23 +173,17 @@ class AgentSnapper(ops.Object):
         except SnapperSysCallError:
             return False
 
-        pattern = r"""
-            ^
-            Service   \s+  Startup  \s+ Current           \s+ Notes \s*\n
-            [\w\.-]+  \s+  \w+      \s+ (active|inactive) \s+ .*
-            $
-        """
-        match = re.match(pattern, status_output, re.VERBOSE)
-
-        if match is None:
-            return False
-
-        return match.group(1) == "active"
+        # Parse the output for the service status
+        for line in status_output.splitlines():
+            if line.startswith(f"{self._snap_name}.daemon"):
+                parts = line.split()
+                if len(parts) >= 4 and parts[2] == "active":
+                    return True
+        return False
 
     def install_snap(self) -> None:
-        """Install the snap."""
+        """Install or refresh the snap."""
         channel = self._charm.config["snap-channel"]
-
         if not self._is_snap_installed:
             logger.debug(f"### Installing {self._snap_name}.")
             self._sys_exec(
@@ -207,9 +206,8 @@ class AgentSnapper(ops.Object):
             )
 
     def get_snap_config(self) -> dict:
-        """Get snap config."""
+        """Get the current snap configuration as a dictionary."""
         logger.debug(f"#### Fetching current config for {self._snap_name}.")
-
         try:
             config_output = self._sys_exec(
                 self._snap_path,
@@ -219,17 +217,15 @@ class AgentSnapper(ops.Object):
             )
         except SnapperSysCallError:
             return {}
-
         try:
             snap_config = json.loads(config_output)
         except json.JSONDecodeError:
             logger.error("#### Error decoding snap config")
             return {}
-
         return snap_config
 
     def remove_snap(self) -> None:
-        """Remove the snap."""
+        """Remove the snap from the system."""
         logger.debug(f"### Removing {self._snap_name}.")
         self._sys_exec(
             self._snap_path,
@@ -238,7 +234,7 @@ class AgentSnapper(ops.Object):
         )
 
     def run_snap_service(self, service: str) -> None:
-        """Execute 'snap run'."""
+        """Run a snap service (e.g., start/stop daemon)."""
         logger.debug(f"### Running {self._snap_name}.{service}")
         try:
             self._sys_exec(
@@ -247,12 +243,14 @@ class AgentSnapper(ops.Object):
                 f"{self._snap_name}.{service}",
             )
         except SnapperSysCallError as e:
-            logger.error(f"Error running {self._snap_name}.{service}")
-            logger.error(e)
+            logger.error(f"Error running {self._snap_name}.{service}: {e}")
 
     @staticmethod
     def _sys_exec(*cmd: Any) -> str:
-        """Execute subprocesses.."""
+        """Execute a system command and return its output.
+
+        Raises SnapperSysCallError on failure.
+        """
         str_cmd = [str(p) for p in cmd]
         logger.debug(f"-----> Running command in subprocess: {shlex.join(str_cmd)}")
         try:
@@ -269,5 +267,5 @@ class AgentSnapper(ops.Object):
             raise SnapperSysCallError(f"System command failed: {message}")
 
         out = result.stdout.decode("utf-8")
-        logger.debug(f"-----> Command succeeded: {out}")
+        logger.debug(f"-----> Command succeeded: {out.strip()}")
         return out
