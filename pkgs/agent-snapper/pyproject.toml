@@ -1,0 +1,14 @@
+[project]
+name = "agent-snapper"
+version = "0.1.0"
+description = "Charm class for vantage agents"
+readme = "README.md"
+authors = [
+    { name = "VantageCompute", email = "info@vantagecompute.ai" }
+]
+requires-python = "==3.12.*"
+dependencies = ["ops"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
