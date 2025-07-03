@@ -41,7 +41,7 @@ juju integrate slurmdbd slurmctld
 juju integrate slurmd slurmctld
 juju integrate slurm-util slurmctld
 ```
-> **Note:** For more information on deploying and managing Slurm with Juju, see the [slurm-charms upstream documentation](https://canonical-charmed-hpc.readthedocs-hosted.com/latest/).
+> **Note:** For more information on deploying and managing Slurm with Juju, see the [Charmed HPC Documentation](https://canonical-charmed-hpc.readthedocs-hosted.com/latest/).
 
 
 ### Deploy and Integrate the Jobbergate Agent Charm

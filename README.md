@@ -64,15 +64,20 @@ ls -la _build/
 [add a model](https://documentation.ubuntu.com/juju/3.6/reference/model/).
 
 #### Deploy Slurm
-Use juju to deploy a slurm cluster.
+Use juju to deploy a slurm cluster. We will configure the slurm cluster name to, "vantage-cluster" for the purposes of this example.
+
+> **Note:** Take note of the cluster name, "vantage-cluster". To be used in the next step.
 
 ```bash
 juju add-model slurm
 
 juju deploy mysql --channel 8.0/stable
 juju deploy slurmdbd --channel edge
+
+# Configure your desired cluster-name
 juju deploy slurmctld --channel edge \
     --config cluster-name=vantage-cluster
+
 juju deploy slurmd --channel edge
 juju deploy sackd slurm-util --channel edge
 
@@ -81,15 +86,16 @@ juju integrate slurmdbd slurmctld
 juju integrate slurmd slurmctld
 juju integrate slurm-util slurmctld
 ```
-> **Note:** For more information on deploying and managing Slurm with Juju, see the [slurm-charms upstream documentation](https://canonical-charmed-hpc.readthedocs-hosted.com/latest/).
+> **Note:** For more information on deploying and managing Slurm with Juju, see the [Charmed HPC Documentation](https://canonical-charmed-hpc.readthedocs-hosted.com/latest/).
 
 ### Deploy Vantage Agents
-Visit the desired cluster in the [Vantage UI](https://vantagecompute.ai) to obtain the oidc configuration needed by each of the agents. 
+Obtain your cluster oidc configuration (needed to configure the agents) in the [Vantage UI](https://vantagecompute.ai).
 Once you have your cluster oidc configuration, [deploy](https://documentation.ubuntu.com/juju/3.6/reference/juju-cli/list-of-juju-cli-commands/deploy/)
 and [integrate](https://documentation.ubuntu.com/juju/3.6/reference/juju-cli/list-of-juju-cli-commands/integrate/) the vantage-agents we just built (in the `_build/` dir).
 
 ```bash
 #!/bin/bash
+
 OIDC_CLIENT_ID=<oidc_client_id>
 OIDC_CLIENT_SECRET=<oidc_client_secret>
 SLURM_CLUSTER_NAME=vantage-cluster
