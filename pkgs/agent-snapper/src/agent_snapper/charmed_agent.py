@@ -77,7 +77,7 @@ class AgentSnapper(ops.Object):
     def _on_install(self, event: ops.InstallEvent) -> None:
         """Perform install operations for the snap."""
         logger.debug(f"## Processing install event for {self._snap_name}.")
-        self._charm.unit.status = ops.WaitingStatus(f"Installing snap for {self._snap_name}")
+        self._charm.unit.status = ops.WaitingStatus(f"Installing snap: {self._snap_name}")
         try:
             self.install_snap()
         except Exception as e:
@@ -91,9 +91,9 @@ class AgentSnapper(ops.Object):
 
     def _on_config_changed(self, event: ops.ConfigChangedEvent) -> None:
         """Perform config-changed operations for the snap."""
-        logger.debug(f"## Processing config changed event for {self._snap_name}.")
+        logger.debug(f"## Processing config changed event: {self._snap_name}.")
         if not self._is_snap_installed:
-            logger.debug(f"## Snap for {self._snap_name} not installed, deferring event")
+            logger.debug(f"## Snap: {self._snap_name} not installed, deferring event")
             event.defer()
             return
 
@@ -103,7 +103,7 @@ class AgentSnapper(ops.Object):
             for key, value in self._charm.config.items()
             if key.startswith(prefix)
         }
-        logger.info(f"Snap configs: {snap_configs}")
+        logger.debug(f"Snap configs: {snap_configs}")
 
         missing = [k for k in self._required_snap_configs if not snap_configs.get(k)]
         if not missing:

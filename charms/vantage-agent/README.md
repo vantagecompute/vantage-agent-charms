@@ -27,11 +27,16 @@ juju bootstrap localhost
 
 ### Deploy Slurm
 ```bash
+#!/bin/bash
 juju add-model slurm
 
 juju deploy mysql --channel 8.0/stable
 juju deploy slurmdbd --channel edge
-juju deploy slurmctld --channel edge
+
+# Configure the desired cluster-name
+juju deploy slurmctld --channel edge \
+    --config cluster-name=vantage-cluster
+
 juju deploy slurmd --channel edge
 juju deploy sackd slurm-util --channel edge
 
@@ -51,7 +56,7 @@ Supply the cluster OIDC configuration to juju and deploy the vantage-agent.
 juju deploy vantage-agent \
     --config vantage-agent-oidc-client-id=<OIDC_CLIENT_ID> \
     --config vantage-agent-oidc-client-secret=<OIDC_CLIENT_SECRET> \
-    --config vantage-agent-cluster-name=<SLURM_CLUSTER_NAME>
+    --config vantage-agent-cluster-name=vantage-cluster
 ```
 
 Integrate the `vantage-agent` with `slurm-util` to install the snap, apply configuration, and connect to the Vantage platform:

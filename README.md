@@ -18,7 +18,7 @@
 
 ## Overview
 
-**Vantage Agent Charms** are a collection of Juju charms that enable seamless integration of Slurm clusters with the [Vantage](https://vantagecompute.ai) platform. Each charm manages the deployment and lifecycle of its corresponding agent snap, providing automation and operational consistency for HPC environments.
+The **Vantage Agent Charms** are a collection of Juju charms that enable seamless integration of Slurm clusters with the [Vantage](https://vantagecompute.ai) platform. Each charm manages the deployment and lifecycle of its corresponding agent snap, providing automation and operational consistency for HPC environments.
 
 ### Included Charms
 
@@ -71,7 +71,8 @@ juju add-model slurm
 
 juju deploy mysql --channel 8.0/stable
 juju deploy slurmdbd --channel edge
-juju deploy slurmctld --channel edge
+juju deploy slurmctld --channel edge \
+    --config cluster-name=vantage-cluster
 juju deploy slurmd --channel edge
 juju deploy sackd slurm-util --channel edge
 
@@ -88,9 +89,10 @@ Once you have your cluster oidc configuration, [deploy](https://documentation.ub
 and [integrate](https://documentation.ubuntu.com/juju/3.6/reference/juju-cli/list-of-juju-cli-commands/integrate/) the vantage-agents we just built (in the `_build/` dir).
 
 ```bash
-OIDC_CLIENT_SECRET=<oidc_client_secret>
+#!/bin/bash
 OIDC_CLIENT_ID=<oidc_client_id>
-SLURM_CLUSTER_NAME=<slurm_cluster_name>
+OIDC_CLIENT_SECRET=<oidc_client_secret>
+SLURM_CLUSTER_NAME=vantage-cluster
 
 juju deploy ./_build/license-manager-agent.charm \
     --config license-manager-agent-oidc-client-id=$OIDC_CLIENT_ID \
