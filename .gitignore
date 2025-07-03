@@ -17,3 +17,4 @@ cover
 .terraform.lock.hcl
 *.tfstate*
 external
+charmcraft-auth
