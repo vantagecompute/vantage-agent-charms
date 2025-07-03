@@ -1,65 +1,86 @@
+
+<a href="https://www.vantagecompute.ai/">
+  <img src="https://vantage-compute-public-assets.s3.us-east-1.amazonaws.com/branding/vantage-logo-text-black-horz.png" alt="Vantage Compute Logo" width="100" style="margin-bottom: 0.5em;"/>
+</a>
+
 # License Manager Agent Charm
-
-## Usage
-
-Follow the steps below to get started.
+[![Charmhub Latest Release Badge](https://charmhub.io/license-manager-agent/badge.svg)](https://charmhub.io/license-manager-agent)
 
 
-### Build the charm
 
-Running the following command will produce a .charm file, `license-manager-agent.charm`
+## Overview
+
+The [**License Manager Agent**](https://github.com/omnivector-solutions/license-manager/tree/main/lm-agent) is the agent component of Vantage's license optimization mideleware, the [License Manager](https://github.com/omnivector-solutions/license-manager). The license-manager-agent sits (abstractly) between slurm, the application workload, and the software license servers, optimizing throughput through coordinated scheduling in multi-cluster environments. For additional information on how to use the License Manager, please see our upstream [Documentation](https://docs.vantagecompute.ai)
+
+---
+
+## Getting Started Example
+To use the license-manager-agent, you must first have a slurm cluster. We will install one using juju in lxd containers for this example.
+
+### Install the Prerequisites
+Install the required tools:
+```bash
+sudo snap install juju --channel=3/stable --classic
+sudo snap install lxd --channel=latest/stable --classic
+```
+### Bootstrap Juju
+```bash
+juju bootstrap localhost
+```
+
+
+### Deploy Slurm
+Use Juju to add a model and deploy the slurm charms, adding a utility node to host the license-manager-agent.
 
 ```bash
-charmcraft build
+juju add-model slurm
+
+juju deploy mysql --channel 8.0/stable
+juju deploy slurmdbd --channel edge
+juju deploy slurmctld --channel edge
+juju deploy slurmd --channel edge
+juju deploy sackd slurm-util --channel edge
+
+juju integrate slurmdbd mysql
+juju integrate slurmdbd slurmctld
+juju integrate slurmd slurmctld
+juju integrate slurm-util slurmctld
 ```
 
+> **Note:** For more information on deploying and managing Slurm with Juju, see the [slurm-charms upstream documentation](https://canonical-charmed-hpc.readthedocs-hosted.com/latest/).
 
-### Create the license-manager-agent charm config
-
-Create a new config file named `license-manager-agent.yaml`. It should be structured
-like this:
-
-```yaml
-license-manager-agent:
-  snap-config: |
-    base-api-url=<base-api-url>
-    oidc-domain=<oidc-domain>
-    oidc-client-id=<oidc-client-id>
-    oidc-client-secret=<oidc-client-secret>
+### Deploy and Integrate the License Manager Agent Charm
+Visit the [Clusters](https://app.vantagecompute.ai/compute/clusters) dashboard in Vantage to obtain the cluster oidc configuration.
+Supply the cluster oidc configuration to juju and deploy the license-managera-agent.
+```bash
+juju deploy license-manager-agent \
+    --config license-manager-agent-oidc-client-id=<OIDC_CLIENT_ID> \
+    --config license-manager-agent-oidc-client-secret=<OIDC_CLIENT_SECRET>
 ```
 
-A fully populated config script might look like:
-
-```yaml
-license-manager-agent:
-  snap-config: |
-    base-api-url=https://apis.vantagehpc.io
-    oidc-domain=auth.vantagehpc.io/realms/vantage
-    oidc-client-id=ae4e7c40-7889-45ae-bd36-1ad2f25dc679
-    oidc-client-secret=LMmPxusATyKz_dp63hjeJO7cFUayiYvudGv4r3gUk_4
-```
-For a complete listing of the configuration options, see
-[license-manager-agent](https://snapcraft.io/license-manager-agent) on the Snap Store.
-
-
-### Deploy the charm
-
-Using the built charm and the defined config file, run this command to deploy the charm:
+Integrate the `license-manager-agent`  with `slurm-util` to install the `license-manager-agent` snap,
+apply the configuration, and connect the agent to the [Vantage](https://vantagecompute.ai) platform.
 
 ```bash
-juju deploy ./license-manager-agent.charm \
-    --config ./license-manager-agent.yaml
+juju integrate license-manager-agent slurm-util
 ```
 
-Note: the `./` is needed before the charm filename.
+---
 
-Next, relate the license-manager-agent app to the slurmctld app in juju:
+## Contributing
 
-```bash
-juju integrate license-manager-agent slurmctld
-```
+Contributions are welcome! Please open issues or pull requests for bug fixes, improvements, or new features.
 
+---
 
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License. See the [LICENSE](../../LICENSE) file for details.
+
+## Contact
+
+For questions or support, email us at [info@vantagecompute.ai](mailto:info@vantagecompute.ai).
+
+---
+
+© 2025 Vantage Compute Corporation. All rights reserved.
