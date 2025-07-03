@@ -18,7 +18,7 @@
 
 ## Overview
 
-**Vantage Agent Charms** are a collection of Juju charms that enable seamless integration of Slurm clusters with the [Vantage](https://vantagecompute.ai) platform. Each charm manages the deployment and lifecycle of its corresponding agent snap, providing automation and operational consistency for HPC environments.
+The **Vantage Agent Charms** are a collection of Juju charms that enable seamless integration of Slurm clusters with the [Vantage](https://vantagecompute.ai) platform. Each charm manages the deployment and lifecycle of its corresponding agent snap, providing automation and operational consistency for HPC environments.
 
 ### Included Charms
 
